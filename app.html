@@ -1,0 +1,2154 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TP2 Linux – Plateforme DevOps</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #040810;
+        --surface: #080f1e;
+        --surface2: #0c1628;
+        --accent: #00f0ff;
+        --accent2: #7c3aed;
+        --accent3: #f59e0b;
+        --danger: #ef4444;
+        --text: #e2e8f0;
+        --muted: #64748b;
+        --border: rgba(0, 240, 255, 0.12);
+        --glow: 0 0 40px rgba(0, 240, 255, 0.15);
+        --glow-strong: 0 0 80px rgba(0, 240, 255, 0.3);
+        --font-display: "Syne", sans-serif;
+        --font-mono: "Space Mono", monospace;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font-display);
+        overflow-x: hidden;
+        cursor: none;
+      }
+
+      /* CUSTOM CURSOR */
+      .cursor {
+        position: fixed;
+        width: 12px;
+        height: 12px;
+        background: var(--accent);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        transition:
+          transform 0.1s,
+          width 0.2s,
+          height 0.2s,
+          background 0.2s;
+        box-shadow: 0 0 15px var(--accent);
+      }
+      .cursor-ring {
+        position: fixed;
+        width: 36px;
+        height: 36px;
+        border: 1px solid rgba(0, 240, 255, 0.5);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9998;
+        transform: translate(-50%, -50%);
+        transition:
+          transform 0.15s ease-out,
+          width 0.3s,
+          height 0.3s;
+      }
+      body:has(a:hover) .cursor,
+      body:has(button:hover) .cursor {
+        width: 20px;
+        height: 20px;
+        background: var(--accent2);
+      }
+      body:has(a:hover) .cursor-ring,
+      body:has(button:hover) .cursor-ring {
+        width: 56px;
+        height: 56px;
+      }
+
+      /* CANVAS BACKGROUND */
+      #bg-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      /* PAGES */
+      .page {
+        display: none;
+        position: relative;
+        z-index: 1;
+        min-height: 100vh;
+      }
+      .page.active {
+        display: block;
+      }
+
+      /* NAV */
+      nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 48px;
+        background: rgba(4, 8, 16, 0.8);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border);
+      }
+      .nav-logo {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--accent);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .nav-logo span {
+        color: var(--muted);
+      }
+      .nav-links {
+        display: flex;
+        gap: 8px;
+      }
+      .nav-btn {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 8px 18px;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 3px;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+      .nav-btn::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--accent);
+        transform: translateX(-101%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: -1;
+      }
+      .nav-btn:hover {
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      .nav-btn:hover::before {
+        transform: translateX(0);
+      }
+      .nav-btn.active {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      /* ===== PAGE 1: HOME ===== */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 120px 48px 80px;
+        text-align: center;
+        position: relative;
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        text-transform: uppercase;
+        border: 1px solid rgba(0, 240, 255, 0.3);
+        padding: 8px 20px;
+        border-radius: 2px;
+        margin-bottom: 48px;
+        animation: fadeSlideDown 0.8s 0.2s both;
+      }
+      .hero-badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        background: var(--accent);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      .hero-title {
+        font-size: clamp(52px, 8vw, 110px);
+        font-weight: 800;
+        line-height: 0.9;
+        letter-spacing: -3px;
+        animation: fadeSlideUp 0.9s 0.4s both;
+      }
+      .hero-title .line1 {
+        display: block;
+        color: var(--text);
+      }
+      .hero-title .line2 {
+        display: block;
+        background: linear-gradient(
+          135deg,
+          var(--accent) 0%,
+          var(--accent2) 60%,
+          var(--accent3) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero-sub {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.8;
+        max-width: 560px;
+        margin: 36px auto 64px;
+        animation: fadeSlideUp 0.9s 0.6s both;
+      }
+
+      .hero-cta {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeSlideUp 0.9s 0.8s both;
+      }
+      .btn-primary {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 16px 36px;
+        background: var(--accent);
+        color: var(--bg);
+        border: none;
+        cursor: pointer;
+        border-radius: 2px;
+        font-weight: 700;
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
+      .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--glow-strong);
+      }
+      .btn-secondary {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        padding: 16px 36px;
+        background: transparent;
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        cursor: pointer;
+        border-radius: 2px;
+        transition: all 0.2s;
+      }
+      .btn-secondary:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* TECH STACK GRID */
+      .stack-section {
+        padding: 100px 48px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .section-label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--accent);
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .section-title {
+        font-size: clamp(32px, 4vw, 52px);
+        font-weight: 800;
+        letter-spacing: -1.5px;
+        line-height: 1;
+        margin-bottom: 56px;
+      }
+
+      .stack-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+      }
+      .stack-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 32px 24px;
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.3s,
+          border-color 0.3s,
+          box-shadow 0.3s;
+        cursor: pointer;
+        animation: fadeSlideUp 0.6s both;
+      }
+      .stack-card:hover {
+        transform: translateY(-6px);
+        border-color: var(--accent-color, var(--accent));
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.4),
+          0 0 30px var(--glow-color, rgba(0, 240, 255, 0.1));
+      }
+      .stack-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--accent-color, var(--accent));
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .stack-card:hover::before {
+        opacity: 1;
+      }
+      .stack-card-icon {
+        font-size: 36px;
+        margin-bottom: 20px;
+      }
+      .stack-card-name {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--accent-color, var(--accent));
+      }
+      .stack-card-desc {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      /* PROBLEMS SECTION */
+      .problems-section {
+        padding: 100px 48px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+      }
+      .problems-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .problems-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+      }
+      .problem-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .problem-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        background: rgba(239, 68, 68, 0.04);
+        border-radius: 4px;
+        transition: transform 0.2s;
+      }
+      .problem-item:hover {
+        transform: translateX(8px);
+      }
+      .problem-icon {
+        font-size: 20px;
+        flex-shrink: 0;
+      }
+      .problem-text {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .problem-text strong {
+        color: var(--text);
+        display: block;
+        margin-bottom: 4px;
+        font-size: 13px;
+      }
+
+      .solution-box {
+        padding: 48px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        position: relative;
+        overflow: hidden;
+      }
+      .solution-box::after {
+        content: "";
+        position: absolute;
+        bottom: -60px;
+        right: -60px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(0, 240, 255, 0.1) 0%,
+          transparent 70%
+        );
+      }
+      .solution-arrow {
+        font-size: 48px;
+        color: var(--accent);
+        margin-bottom: 24px;
+      }
+
+      /* PARTS OVERVIEW */
+      .parts-section {
+        padding: 100px 48px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .parts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .part-card {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        padding: 32px;
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeSlideUp 0.6s both;
+      }
+      .part-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          var(--part-color, var(--accent2)) 0%,
+          transparent 60%
+        );
+        opacity: 0;
+        transition: opacity 0.35s;
+      }
+      .part-card:hover {
+        transform: translateY(-8px) scale(1.01);
+        border-color: var(--part-color, var(--accent2));
+      }
+      .part-card:hover::before {
+        opacity: 0.07;
+      }
+      .part-num {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--part-color, var(--accent2));
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .part-title {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .part-desc {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .part-arrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 24px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--part-color, var(--accent2));
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        transition: gap 0.2s;
+      }
+      .part-card:hover .part-arrow {
+        gap: 14px;
+      }
+
+      /* ARCH DIAGRAM */
+      .arch-section {
+        padding: 100px 48px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+      }
+      .arch-inner {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .arch-diagram {
+        margin-top: 56px;
+        padding: 48px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+      .arch-row {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        position: relative;
+      }
+      .arch-node {
+        padding: 14px 24px;
+        border-radius: 3px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: 1px solid;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        position: relative;
+        transition:
+          box-shadow 0.3s,
+          transform 0.3s;
+      }
+      .arch-node:hover {
+        transform: scale(1.05);
+      }
+      .arch-node.jenkins {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.5);
+        color: #f87171;
+      }
+      .arch-node.jenkins:hover {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+      }
+      .arch-node.docker {
+        background: rgba(0, 240, 255, 0.08);
+        border-color: rgba(0, 240, 255, 0.4);
+        color: var(--accent);
+      }
+      .arch-node.docker:hover {
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.25);
+      }
+      .arch-node.app {
+        background: rgba(124, 58, 237, 0.1);
+        border-color: rgba(124, 58, 237, 0.5);
+        color: #a78bfa;
+      }
+      .arch-node.app:hover {
+        box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
+      }
+      .arch-node.prometheus {
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.4);
+        color: var(--accent3);
+      }
+      .arch-node.prometheus:hover {
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.3);
+      }
+      .arch-node.grafana {
+        background: rgba(251, 146, 60, 0.08);
+        border-color: rgba(251, 146, 60, 0.4);
+        color: #fb923c;
+      }
+      .arch-node.grafana:hover {
+        box-shadow: 0 0 30px rgba(251, 146, 60, 0.3);
+      }
+      .arch-connector {
+        width: 1px;
+        height: 36px;
+        background: linear-gradient(to bottom, var(--border), var(--accent));
+        margin: 0 auto;
+        position: relative;
+      }
+      .arch-connector::after {
+        content: "▼";
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 9px;
+        color: var(--accent);
+      }
+      .arch-connector-h {
+        position: absolute;
+        top: 50%;
+        height: 1px;
+        background: linear-gradient(to right, var(--accent), transparent);
+        width: 60px;
+        left: 100%;
+      }
+
+      /* ===== PAGE 2: DETAILS ===== */
+      .details-page {
+        padding: 120px 48px 80px;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        background: none;
+        border: none;
+        margin-bottom: 60px;
+        transition:
+          color 0.2s,
+          gap 0.2s;
+      }
+      .back-btn:hover {
+        color: var(--accent);
+        gap: 16px;
+      }
+
+      .detail-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 40px;
+        margin-bottom: 80px;
+        padding-bottom: 60px;
+        border-bottom: 1px solid var(--border);
+      }
+      .detail-num-big {
+        font-size: 120px;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--part-col, var(--accent2));
+        opacity: 0.12;
+        flex-shrink: 0;
+        letter-spacing: -6px;
+      }
+      .detail-header-text {
+        flex: 1;
+      }
+      .detail-category {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--part-col, var(--accent2));
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .detail-title {
+        font-size: clamp(36px, 5vw, 64px);
+        font-weight: 800;
+        letter-spacing: -2px;
+        line-height: 1;
+        margin-bottom: 20px;
+      }
+      .detail-intro {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.8;
+        max-width: 600px;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+      .detail-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 32px;
+        border-radius: 4px;
+        border-left: 3px solid var(--part-col, var(--accent2));
+      }
+      .detail-card-title {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--part-col, var(--accent2));
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+      }
+      .detail-card-content {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.9;
+      }
+      .detail-card-content strong {
+        color: var(--text);
+      }
+
+      .code-block {
+        background: #0a0f1a;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--part-col, var(--accent));
+        padding: 24px 28px;
+        border-radius: 4px;
+        margin: 8px 0;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: #94a3b8;
+        line-height: 1.8;
+        overflow-x: auto;
+        position: relative;
+      }
+      .code-block .comment {
+        color: #475569;
+      }
+      .code-block .keyword {
+        color: var(--accent);
+      }
+      .code-block .string {
+        color: #86efac;
+      }
+      .code-block .number {
+        color: var(--accent3);
+      }
+      .code-block::before {
+        content: attr(data-lang);
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      .checklist {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .checklist li {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .checklist li::before {
+        content: "→";
+        color: var(--part-col, var(--accent2));
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+      .checklist li strong {
+        color: var(--text);
+      }
+
+      .tip-box {
+        background: rgba(0, 240, 255, 0.04);
+        border: 1px solid rgba(0, 240, 255, 0.2);
+        padding: 24px 28px;
+        border-radius: 4px;
+        margin-top: 32px;
+      }
+      .tip-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--accent);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 12px;
+      }
+      .tip-text {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+
+      .part-nav {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 80px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border);
+      }
+      .part-nav-btn {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        padding: 14px 28px;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 3px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .part-nav-btn.prev {
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+      .part-nav-btn.prev:hover {
+        border-color: var(--text);
+        color: var(--text);
+      }
+      .part-nav-btn.next {
+        border: 1px solid var(--accent);
+        color: var(--accent);
+      }
+      .part-nav-btn.next:hover {
+        background: var(--accent);
+        color: var(--bg);
+      }
+      .part-nav-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* SCROLL ANIMATIONS */
+      .reveal {
+        opacity: 0;
+        transform: translateY(30px);
+        transition:
+          opacity 0.7s,
+          transform 0.7s;
+      }
+      .reveal.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* ANIMATIONS */
+      @keyframes fadeSlideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          box-shadow: 0 0 10px var(--accent);
+        }
+        50% {
+          opacity: 0.5;
+          box-shadow: none;
+        }
+      }
+      @keyframes scanline {
+        from {
+          transform: translateY(-100%);
+        }
+        to {
+          transform: translateY(100vh);
+        }
+      }
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-12px);
+        }
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+
+      /* TERMINAL INTRO */
+      .terminal-intro {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--accent);
+        margin-bottom: 56px;
+        animation: fadeSlideDown 0.8s 0s both;
+      }
+      .terminal-prompt {
+        color: var(--accent3);
+      }
+      .terminal-cursor {
+        display: inline-block;
+        width: 8px;
+        height: 16px;
+        background: var(--accent);
+        animation: blink 1s infinite;
+        vertical-align: middle;
+      }
+
+      /* STATS ROW */
+      .stats-row {
+        display: flex;
+        gap: 1px;
+        margin: 80px 0;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        border-radius: 4px;
+      }
+      .stat-item {
+        flex: 1;
+        padding: 36px 24px;
+        background: var(--surface);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: background 0.3s;
+      }
+      .stat-item:hover {
+        background: var(--surface2);
+      }
+      .stat-item + .stat-item {
+        border-left: 1px solid var(--border);
+      }
+      .stat-num {
+        font-size: 48px;
+        font-weight: 800;
+        letter-spacing: -2px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      /* PIPELINE VISUAL */
+      .pipeline {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        overflow-x: auto;
+        padding: 40px 0;
+      }
+      .pipeline-step {
+        flex-shrink: 0;
+        padding: 20px 24px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        text-align: center;
+        min-width: 120px;
+        transition: all 0.3s;
+        cursor: default;
+      }
+      .pipeline-step:hover {
+        border-color: var(--accent);
+        transform: scale(1.05);
+        box-shadow: var(--glow);
+      }
+      .pipeline-step-icon {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      .pipeline-step-name {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .pipeline-arrow {
+        width: 50px;
+        flex-shrink: 0;
+        height: 1px;
+        background: linear-gradient(to right, var(--accent2), var(--accent));
+        position: relative;
+      }
+      .pipeline-arrow::after {
+        content: "▶";
+        position: absolute;
+        right: -4px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 9px;
+        color: var(--accent);
+      }
+
+      /* SCROLLBAR */
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--accent2);
+        border-radius: 2px;
+      }
+
+      /* RESPONSIVE */
+      @media (max-width: 768px) {
+        nav {
+          padding: 16px 20px;
+        }
+        .hero {
+          padding: 100px 20px 60px;
+        }
+        .stack-section,
+        .parts-section {
+          padding: 60px 20px;
+        }
+        .problems-section {
+          padding: 60px 20px;
+        }
+        .arch-section {
+          padding: 60px 20px;
+        }
+        .problems-grid {
+          grid-template-columns: 1fr;
+        }
+        .parts-grid {
+          grid-template-columns: 1fr;
+        }
+        .detail-grid {
+          grid-template-columns: 1fr;
+        }
+        .detail-header {
+          flex-direction: column;
+          gap: 20px;
+        }
+        .detail-num-big {
+          font-size: 60px;
+        }
+        .details-page {
+          padding: 100px 20px 60px;
+        }
+        .stats-row {
+          flex-direction: column;
+          gap: 0;
+        }
+        .stat-item + .stat-item {
+          border-left: none;
+          border-top: 1px solid var(--border);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- NAV -->
+    <nav>
+      <div class="nav-logo">TP2 <span>/ Linux</span></div>
+      <div class="nav-links">
+        <button class="nav-btn active" id="nav-home" onclick="showPage('home')">
+          Accueil
+        </button>
+        <button
+          class="nav-btn"
+          id="nav-details"
+          onclick="showPage('details', 0)"
+        >
+          Détails
+        </button>
+      </div>
+    </nav>
+
+    <!-- ======================== PAGE HOME ======================== -->
+    <div class="page active" id="page-home">
+      <!-- HERO -->
+      <section class="hero">
+        <div class="terminal-intro">
+          <span class="terminal-prompt">$</span>
+          <span>init devops-platform --env centos</span>
+          <span class="terminal-cursor"></span>
+        </div>
+        <div class="hero-badge">LP-DAR · INPTIC · 2024</div>
+        <h1 class="hero-title">
+          <span class="line1">Plateforme</span>
+          <span class="line2">DevOps</span>
+        </h1>
+        <p class="hero-sub">
+          Infrastructure complète de déploiement conteneurisé avec CI/CD
+          automatisé, monitoring temps réel et visualisation des métriques.
+        </p>
+        <div class="hero-cta">
+          <button class="btn-primary" onclick="showPage('details', 0)">
+            Explorer les parties →
+          </button>
+          <button
+            class="btn-secondary"
+            onclick="
+              document
+                .getElementById('arch-section')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+          >
+            Voir l'architecture
+          </button>
+        </div>
+      </section>
+
+      <!-- STATS -->
+      <div class="stats-row reveal" style="margin: 0 48px">
+        <div class="stat-item">
+          <div class="stat-num" data-target="6">0</div>
+          <div class="stat-label">Parties</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" data-target="5">0</div>
+          <div class="stat-label">Technologies</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" data-target="3">0</div>
+          <div class="stat-label">Conteneurs</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" data-target="1">0</div>
+          <div class="stat-label">Pipeline CI/CD</div>
+        </div>
+      </div>
+
+      <!-- PROBLEMS + SOLUTION -->
+      <section class="problems-section">
+        <div class="problems-inner">
+          <div class="problems-grid">
+            <div>
+              <div class="section-label reveal">Contexte</div>
+              <h2 class="section-title reveal" style="animation-delay: 0.1s">
+                Les problèmes<br />à résoudre
+              </h2>
+              <div class="problem-list">
+                <div class="problem-item reveal">
+                  <span class="problem-icon">⚡</span>
+                  <div class="problem-text">
+                    <strong>Déploiements manuels</strong>
+                    Chaque mise en production est effectuée à la main — source
+                    constante d'erreurs humaines et de régressions.
+                  </div>
+                </div>
+                <div class="problem-item reveal">
+                  <span class="problem-icon">📊</span>
+                  <div class="problem-text">
+                    <strong>Absence de visibilité</strong>
+                    Aucun outil de suivi des performances. Impossible de
+                    détecter les problèmes avant qu'ils impactent les
+                    utilisateurs.
+                  </div>
+                </div>
+                <div class="problem-item reveal">
+                  <span class="problem-icon">🔍</span>
+                  <div class="problem-text">
+                    <strong>Pas de supervision</strong>
+                    Sans monitoring, il est impossible de savoir si
+                    l'application est disponible ou en état de dégradation.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="solution-box reveal">
+              <div class="solution-arrow">⟶</div>
+              <div class="section-label">Solution proposée</div>
+              <h3
+                style="
+                  font-size: 28px;
+                  font-weight: 800;
+                  letter-spacing: -1px;
+                  margin-bottom: 24px;
+                  line-height: 1.1;
+                "
+              >
+                Infrastructure<br />DevOps complète
+              </h3>
+              <ul class="checklist">
+                <li>
+                  <span
+                    >Déploiements <strong>automatisés</strong> et
+                    reproductibles</span
+                  >
+                </li>
+                <li>
+                  <span
+                    >Conteneurisation avec <strong>Docker</strong> pour
+                    l'isolation</span
+                  >
+                </li>
+                <li>
+                  <span>Pipeline <strong>CI/CD</strong> Jenkins intégré</span>
+                </li>
+                <li>
+                  <span
+                    ><strong>Monitoring</strong> Prometheus des métriques</span
+                  >
+                </li>
+                <li>
+                  <span>Dashboards <strong>Grafana</strong> en temps réel</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TECH STACK -->
+      <section class="stack-section">
+        <div class="section-label reveal">Stack technologique</div>
+        <h2 class="section-title reveal">Les outils<br />du projet</h2>
+        <div class="stack-grid">
+          <div
+            class="stack-card reveal"
+            style="
+              --accent-color: #f97316;
+              --glow-color: rgba(249, 115, 22, 0.15);
+              animation-delay: 0.1s;
+            "
+            onclick="showPage('details', 0)"
+          >
+            <div class="stack-card-icon">🐧</div>
+            <div class="stack-card-name">CentOS</div>
+            <div class="stack-card-desc">
+              Système d'exploitation Linux enterprise. Stable, sécurisé, idéal
+              pour les serveurs de production.
+            </div>
+          </div>
+          <div
+            class="stack-card reveal"
+            style="
+              --accent-color: #00b4d8;
+              --glow-color: rgba(0, 180, 216, 0.15);
+              animation-delay: 0.15s;
+            "
+            onclick="showPage('details', 1)"
+          >
+            <div class="stack-card-icon">🐳</div>
+            <div class="stack-card-name">Docker</div>
+            <div class="stack-card-desc">
+              Conteneurisation des applications. Garantit la cohérence entre les
+              environnements dev/prod.
+            </div>
+          </div>
+          <div
+            class="stack-card reveal"
+            style="
+              --accent-color: #a78bfa;
+              --glow-color: rgba(167, 139, 250, 0.15);
+              animation-delay: 0.2s;
+            "
+            onclick="showPage('details', 2)"
+          >
+            <div class="stack-card-icon">⚙️</div>
+            <div class="stack-card-name">Compose</div>
+            <div class="stack-card-desc">
+              Orchestration multi-conteneurs. Déploiement de toute la stack en
+              une seule commande.
+            </div>
+          </div>
+          <div
+            class="stack-card reveal"
+            style="
+              --accent-color: #f59e0b;
+              --glow-color: rgba(245, 158, 11, 0.15);
+              animation-delay: 0.25s;
+            "
+            onclick="showPage('details', 3)"
+          >
+            <div class="stack-card-icon">🔥</div>
+            <div class="stack-card-name">Prometheus</div>
+            <div class="stack-card-desc">
+              Collecte et stockage des métriques. Système de monitoring
+              time-series haute disponibilité.
+            </div>
+          </div>
+          <div
+            class="stack-card reveal"
+            style="
+              --accent-color: #fb923c;
+              --glow-color: rgba(251, 146, 60, 0.15);
+              animation-delay: 0.3s;
+            "
+            onclick="showPage('details', 3)"
+          >
+            <div class="stack-card-icon">📈</div>
+            <div class="stack-card-name">Grafana</div>
+            <div class="stack-card-desc">
+              Visualisation et dashboards interactifs. Transformation des
+              données brutes en insights visuels.
+            </div>
+          </div>
+          <div
+            class="stack-card reveal"
+            style="
+              --accent-color: #ef4444;
+              --glow-color: rgba(239, 68, 68, 0.15);
+              animation-delay: 0.35s;
+            "
+            onclick="showPage('details', 4)"
+          >
+            <div class="stack-card-icon">🔄</div>
+            <div class="stack-card-name">Jenkins</div>
+            <div class="stack-card-desc">
+              Automatisation CI/CD. Pipeline de build, test et déploiement
+              continu de l'application.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section class="arch-section" id="arch-section">
+        <div class="arch-inner">
+          <div class="section-label reveal">Vue globale</div>
+          <h2 class="section-title reveal">Architecture<br />du système</h2>
+          <div class="arch-diagram reveal">
+            <div class="arch-row">
+              <div class="arch-node jenkins" title="CI/CD">🔄 Jenkins</div>
+            </div>
+            <div class="arch-connector"></div>
+            <div class="arch-row">
+              <div class="arch-node docker" title="Conteneurisation">
+                🐳 Docker Compose
+              </div>
+            </div>
+            <div class="arch-connector"></div>
+            <div class="arch-row" style="gap: 32px">
+              <div class="arch-node app">🌐 App Flask</div>
+              <div class="arch-node prometheus">🔥 Prometheus</div>
+              <div class="arch-node grafana">📈 Grafana</div>
+            </div>
+          </div>
+          <p
+            style="
+              font-family: var(--font-mono);
+              font-size: 12px;
+              color: var(--muted);
+              text-align: center;
+              margin-top: 24px;
+              line-height: 1.8;
+            "
+          >
+            Jenkins déclenche les builds → Docker Compose orchestre les
+            conteneurs<br />
+            L'app expose ses métriques → Prometheus les collecte → Grafana les
+            visualise
+          </p>
+        </div>
+      </section>
+
+      <!-- PARTS OVERVIEW -->
+      <section class="parts-section">
+        <div class="section-label reveal">Travail à réaliser</div>
+        <h2 class="section-title reveal">Les 6 parties<br />du projet</h2>
+        <div class="parts-grid">
+          <div
+            class="part-card reveal"
+            style="--part-color: #f97316; animation-delay: 0.1s"
+            onclick="showPage('details', 0)"
+          >
+            <div class="part-num">Partie 01</div>
+            <h3 class="part-title">Environnement</h3>
+            <p class="part-desc">
+              Installation de CentOS, Docker et vérification du bon
+              fonctionnement des conteneurs de base.
+            </p>
+            <div class="part-arrow">Voir détails <span>→</span></div>
+          </div>
+          <div
+            class="part-card reveal"
+            style="--part-color: #00b4d8; animation-delay: 0.15s"
+            onclick="showPage('details', 1)"
+          >
+            <div class="part-num">Partie 02</div>
+            <h3 class="part-title">Développement</h3>
+            <p class="part-desc">
+              Création d'une API REST Flask avec endpoint /metrics, Dockerfile
+              et construction de l'image.
+            </p>
+            <div class="part-arrow">Voir détails <span>→</span></div>
+          </div>
+          <div
+            class="part-card reveal"
+            style="--part-color: #a78bfa; animation-delay: 0.2s"
+            onclick="showPage('details', 2)"
+          >
+            <div class="part-num">Partie 03</div>
+            <h3 class="part-title">Orchestration</h3>
+            <p class="part-desc">
+              Docker Compose pour orchestrer l'application, Prometheus et
+              Grafana en un seul fichier.
+            </p>
+            <div class="part-arrow">Voir détails <span>→</span></div>
+          </div>
+          <div
+            class="part-card reveal"
+            style="--part-color: #f59e0b; animation-delay: 0.25s"
+            onclick="showPage('details', 3)"
+          >
+            <div class="part-num">Partie 04</div>
+            <h3 class="part-title">Monitoring</h3>
+            <p class="part-desc">
+              Configuration Prometheus + Grafana pour visualiser disponibilité
+              et nombre de requêtes.
+            </p>
+            <div class="part-arrow">Voir détails <span>→</span></div>
+          </div>
+          <div
+            class="part-card reveal"
+            style="--part-color: #ef4444; animation-delay: 0.3s"
+            onclick="showPage('details', 4)"
+          >
+            <div class="part-num">Partie 05</div>
+            <h3 class="part-title">CI/CD</h3>
+            <p class="part-desc">
+              Pipeline Jenkins : récupération Git, build Docker automatique et
+              lancement via Compose.
+            </p>
+            <div class="part-arrow">Voir détails <span>→</span></div>
+          </div>
+          <div
+            class="part-card reveal"
+            style="--part-color: #10b981; animation-delay: 0.35s"
+            onclick="showPage('details', 5)"
+          >
+            <div class="part-num">Partie 06</div>
+            <h3 class="part-title">Validation</h3>
+            <p class="part-desc">
+              Tests et vérification de l'ensemble : app, métriques, dashboards
+              et pipeline automatisé.
+            </p>
+            <div class="part-arrow">Voir détails <span>→</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <!-- END PAGE HOME -->
+
+    <!-- ======================== PAGE DETAILS ======================== -->
+    <div class="page" id="page-details">
+      <div class="details-page" id="details-content">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+
+    <script>
+      /* ===== DATA ===== */
+      const parts = [
+        {
+          num: "01",
+          category: "Environnement",
+          title: "Setup CentOS\n& Docker",
+          color: "#f97316",
+          intro:
+            "La fondation du projet. Avant de déployer quoi que ce soit, il faut préparer l'environnement hôte — un système Linux stable avec Docker opérationnel.",
+          cards: [
+            {
+              title: "📦 Installer CentOS",
+              content: `<strong>Option recommandée :</strong> CentOS Stream 9 ou Rocky Linux 9 (successeur de CentOS).<br><br>
+        Soit via une VM VirtualBox/VMware, soit sur bare metal. Prévoir :<br>
+        → Minimum 2 Go RAM, 20 Go disque<br>
+        → Accès sudo configuré<br>
+        → Réseau fonctionnel (NAT ou Bridged)`,
+            },
+            {
+              title: "🐳 Installer Docker",
+              content: `Docker CE (Community Edition) est installé via le dépôt officiel. Après l'install, il faut :<br><br>
+        → Activer le service au démarrage<br>
+        → Ajouter son utilisateur au groupe <strong>docker</strong><br>
+        → Vérifier avec <strong>docker run hello-world</strong><br>
+        → Tester la commande <strong>docker ps</strong>`,
+            },
+          ],
+          code: {
+            lang: "BASH",
+            content: `<span class="comment"># Ajouter le dépôt Docker officiel</span>
+<span class="keyword">sudo</span> dnf config-manager --add-repo \\
+  https://download.docker.com/linux/centos/docker-ce.repo
+
+<span class="comment"># Installer Docker CE</span>
+<span class="keyword">sudo</span> dnf install docker-ce docker-ce-cli containerd.io
+
+<span class="comment"># Démarrer et activer Docker</span>
+<span class="keyword">sudo</span> systemctl enable --now docker
+
+<span class="comment"># Ajouter l'utilisateur au groupe docker</span>
+<span class="keyword">sudo</span> usermod -aG docker $USER
+
+<span class="comment"># Vérifier le fonctionnement</span>
+docker run hello-world`,
+          },
+          checklist: [
+            "CentOS/Rocky Linux installé et à jour",
+            "Docker CE installé sans erreur",
+            "Service Docker actif (systemctl status docker)",
+            "Commande <strong>docker run hello-world</strong> réussie",
+            "Utilisateur dans le groupe docker (pas besoin de sudo)",
+          ],
+          tip: "💡 Sur CentOS, SELinux peut bloquer Docker. Vérifiez avec <code>getenforce</code>. Si nécessaire, configurez le contexte SELinux ou passez en mode Permissive le temps du TP.",
+        },
+        {
+          num: "02",
+          category: "Développement & Conteneurisation",
+          title: "API Flask\n& Dockerfile",
+          color: "#00b4d8",
+          intro:
+            "Développer une petite API REST en Python Flask qui expose un endpoint /metrics. L'objectif est d'avoir une application conteneurisée et monitorable.",
+          cards: [
+            {
+              title: "🐍 API Flask avec /metrics",
+              content: `L'application doit au minimum exposer :<br><br>
+        → <strong>GET /</strong> : page d'accueil (retourne un JSON)<br>
+        → <strong>GET /metrics</strong> : métriques au format Prometheus<br><br>
+        Utiliser la lib <strong>prometheus_client</strong> pour générer les métriques automatiquement. Un compteur de requêtes suffit pour démarrer.`,
+            },
+            {
+              title: "📋 Dockerfile",
+              content: `Le Dockerfile décrit comment construire l'image de l'app :<br><br>
+        → Partir d'une image Python officielle (<strong>python:3.11-slim</strong>)<br>
+        → Copier le code et installer les dépendances<br>
+        → Exposer le port <strong>5000</strong><br>
+        → Définir la commande de démarrage`,
+            },
+          ],
+          code: {
+            lang: "PYTHON / DOCKERFILE",
+            content: `<span class="comment"># app.py — API Flask basique</span>
+<span class="keyword">from</span> flask <span class="keyword">import</span> Flask, jsonify
+<span class="keyword">from</span> prometheus_client <span class="keyword">import</span> Counter, generate_latest
+
+app = Flask(__name__)
+REQUEST_COUNT = Counter(<span class="string">'requests_total'</span>, <span class="string">'Total requests'</span>)
+
+@app.route(<span class="string">'/'</span>)
+<span class="keyword">def</span> index():
+    REQUEST_COUNT.inc()
+    <span class="keyword">return</span> jsonify({<span class="string">"status"</span>: <span class="string">"ok"</span>})
+
+@app.route(<span class="string">'/metrics'</span>)
+<span class="keyword">def</span> metrics():
+    <span class="keyword">return</span> generate_latest(), <span class="number">200</span>
+
+<span class="comment">------- Dockerfile -------</span>
+<span class="keyword">FROM</span> python:<span class="number">3.11</span>-slim
+<span class="keyword">WORKDIR</span> /app
+<span class="keyword">COPY</span> requirements.txt .
+<span class="keyword">RUN</span> pip install -r requirements.txt
+<span class="keyword">COPY</span> . .
+<span class="keyword">EXPOSE</span> <span class="number">5000</span>
+<span class="keyword">CMD</span> [<span class="string">"python"</span>, <span class="string">"app.py"</span>]`,
+          },
+          checklist: [
+            "Fichier <strong>app.py</strong> créé avec Flask",
+            "Endpoint <strong>/metrics</strong> fonctionnel (format texte Prometheus)",
+            "Fichier <strong>requirements.txt</strong> avec flask + prometheus_client",
+            "Dockerfile écrit correctement",
+            "Image construite : <strong>docker build -t student-app .</strong>",
+            "Conteneur lancé et accessible sur le port 5000",
+          ],
+          tip: "💡 Pour tester localement avant Docker, lancez simplement <code>python app.py</code> et visitez <code>http://localhost:5000/metrics</code>. Vous devriez voir les métriques au format texte Prometheus.",
+        },
+        {
+          num: "03",
+          category: "Orchestration",
+          title: "Docker Compose\nMulti-services",
+          color: "#a78bfa",
+          intro:
+            "Docker Compose permet de définir et démarrer toute la stack (app + Prometheus + Grafana) en une seule commande. C'est le chef d'orchestre de l'infrastructure.",
+          cards: [
+            {
+              title: "📁 Structure du projet",
+              content: `Organisez votre dossier ainsi :<br><br>
+        <strong>projet/</strong><br>
+        ├── app/ (code Flask + Dockerfile)<br>
+        ├── prometheus.yml (config scraping)<br>
+        ├── grafana/ (dashboards JSON)<br>
+        └── <strong>docker-compose.yml</strong><br><br>
+        Le fichier compose orchestre les 3 services et leur réseau interne.`,
+            },
+            {
+              title: "🌐 Ports exposés",
+              content: `Chaque service est accessible sur un port différent :<br><br>
+        → App Flask : <strong>:5000</strong><br>
+        → Prometheus : <strong>:9090</strong><br>
+        → Grafana : <strong>:3000</strong><br><br>
+        Les services communiquent entre eux via le réseau Docker interne <strong>(DNS par nom de service)</strong>.`,
+            },
+          ],
+          code: {
+            lang: "YAML",
+            content: `<span class="comment"># docker-compose.yml</span>
+<span class="keyword">version</span>: <span class="string">'3.8'</span>
+
+<span class="keyword">services</span>:
+  <span class="keyword">app</span>:
+    build: ./app
+    ports: [<span class="string">"5000:5000"</span>]
+    networks: [monitoring]
+
+  <span class="keyword">prometheus</span>:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports: [<span class="string">"9090:9090"</span>]
+    networks: [monitoring]
+
+  <span class="keyword">grafana</span>:
+    image: grafana/grafana
+    ports: [<span class="string">"3000:3000"</span>]
+    networks: [monitoring]
+
+<span class="keyword">networks</span>:
+  monitoring:
+    driver: bridge`,
+          },
+          checklist: [
+            "Docker Compose installé (<strong>docker compose version</strong>)",
+            "Fichier <strong>docker-compose.yml</strong> écrit avec les 3 services",
+            "Réseau interne <strong>monitoring</strong> défini",
+            "Volumes montés correctement pour Prometheus",
+            "Commande <strong>docker compose up -d</strong> réussie",
+            "Les 3 conteneurs visibles dans <strong>docker ps</strong>",
+          ],
+          tip: "💡 Utilisez <code>docker compose logs -f</code> pour suivre les logs en temps réel de tous les services. Et <code>docker compose down</code> pour tout arrêter proprement.",
+        },
+        {
+          num: "04",
+          category: "Monitoring",
+          title: "Prometheus\n& Grafana",
+          color: "#f59e0b",
+          intro:
+            "Configurer le monitoring complet : Prometheus collecte les métriques de l'application, et Grafana les transforme en tableaux de bord visuels exploitables.",
+          cards: [
+            {
+              title: "🔥 Configurer Prometheus",
+              content: `Le fichier <strong>prometheus.yml</strong> définit quoi scraper et à quelle fréquence :<br><br>
+        → <strong>global.scrape_interval</strong> : fréquence de collecte (15s)<br>
+        → <strong>scrape_configs</strong> : liste des targets à monitorer<br>
+        → La target pointe vers <strong>app:5000/metrics</strong> (nom DNS Docker)<br><br>
+        Accès à l'UI Prometheus : <strong>http://localhost:9090</strong>`,
+            },
+            {
+              title: "📈 Configurer Grafana",
+              content: `Via l'interface web sur le port 3000 (admin/admin par défaut) :<br><br>
+        1. Ajouter <strong>Prometheus comme datasource</strong> (URL: http://prometheus:9090)<br>
+        2. Créer un nouveau Dashboard<br>
+        3. Ajouter un panel → choisir Prometheus<br>
+        4. Requête : <strong>requests_total</strong> pour le compteur<br>
+        5. Requête : <strong>up</strong> pour la disponibilité`,
+            },
+          ],
+          code: {
+            lang: "YAML / PROMQL",
+            content: `<span class="comment"># prometheus.yml — configuration scraping</span>
+<span class="keyword">global</span>:
+  scrape_interval: <span class="string">15s</span>
+
+<span class="keyword">scrape_configs</span>:
+  - job_name: <span class="string">'student-app'</span>
+    static_configs:
+      - targets: [<span class="string">'app:5000'</span>]
+    metrics_path: <span class="string">'/metrics'</span>
+
+<span class="comment">--- Requêtes PromQL pour Grafana ---</span>
+
+<span class="comment"># Taux de requêtes par seconde</span>
+rate(requests_total[<span class="number">5</span>m])
+
+<span class="comment"># Disponibilité du service (1=up, 0=down)</span>
+up{job=<span class="string">"student-app"</span>}
+
+<span class="comment"># Compteur total de requêtes</span>
+requests_total`,
+          },
+          checklist: [
+            "Fichier <strong>prometheus.yml</strong> configuré avec la target app",
+            "Prometheus accessible sur <strong>http://localhost:9090</strong>",
+            "Target <strong>student-app</strong> visible en état UP dans Prometheus",
+            "Grafana accessible sur <strong>http://localhost:3000</strong>",
+            "Datasource Prometheus ajoutée dans Grafana",
+            "Dashboard créé avec panel <strong>requêtes</strong> + panel <strong>disponibilité</strong>",
+          ],
+          tip: "💡 Dans Grafana, allez dans Configuration → Data Sources → Add → Prometheus. L'URL doit être <code>http://prometheus:9090</code> (nom du service Docker, pas localhost !)",
+        },
+        {
+          num: "05",
+          category: "Automatisation CI/CD",
+          title: "Pipeline\nJenkins",
+          color: "#ef4444",
+          intro:
+            "Jenkins automatise l'ensemble du cycle build/deploy. À chaque commit Git, le pipeline récupère le code, construit l'image Docker et redéploie via Compose.",
+          cards: [
+            {
+              title: "🔧 Installer Jenkins",
+              content: `Jenkins peut tourner lui-même dans un conteneur Docker :<br><br>
+        → Image officielle : <strong>jenkins/jenkins:lts</strong><br>
+        → Port par défaut : <strong>8080</strong><br>
+        → Donner accès à Docker socket pour builder les images<br>
+        → Monter <strong>/var/run/docker.sock</strong> dans Jenkins<br><br>
+        Premier accès → récupérer le mot de passe initial dans les logs.`,
+            },
+            {
+              title: "📜 Pipeline Jenkinsfile",
+              content: `Le Jenkinsfile définit les étapes du pipeline :<br><br>
+        → <strong>Stage Checkout</strong> : cloner le repo Git<br>
+        → <strong>Stage Build</strong> : construire l'image Docker<br>
+        → <strong>Stage Deploy</strong> : lancer <code>docker compose up -d</code><br><br>
+        Configurer un webhook Git (GitHub/GitLab) pour déclencher automatiquement.`,
+            },
+          ],
+          code: {
+            lang: "GROOVY (JENKINSFILE)",
+            content: `<span class="comment">// Jenkinsfile</span>
+<span class="keyword">pipeline</span> {
+  agent any
+
+  <span class="keyword">stages</span> {
+    <span class="keyword">stage</span>(<span class="string">'Checkout'</span>) {
+      steps {
+        git url: <span class="string">'https://github.com/vous/projet'</span>,
+            branch: <span class="string">'main'</span>
+      }
+    }
+
+    <span class="keyword">stage</span>(<span class="string">'Build Docker'</span>) {
+      steps {
+        sh <span class="string">'docker build -t student-app ./app'</span>
+      }
+    }
+
+    <span class="keyword">stage</span>(<span class="string">'Deploy'</span>) {
+      steps {
+        sh <span class="string">'docker compose up -d --build'</span>
+      }
+    }
+  }
+
+  <span class="keyword">post</span> {
+    success {
+      echo <span class="string">'✅ Déploiement réussi !'</span>
+    }
+  }
+}`,
+          },
+          checklist: [
+            "Jenkins installé et accessible sur <strong>:8080</strong>",
+            "Plugins requis installés (Git, Docker Pipeline)",
+            "Accès Docker socket configuré dans Jenkins",
+            "Job Pipeline créé avec le Jenkinsfile",
+            "Build déclenché manuellement : succès",
+            "Webhook Git configuré (optionnel mais conseillé)",
+          ],
+          tip: "💡 Pour donner accès à Docker depuis Jenkins en conteneur, montez le socket Docker : <code>-v /var/run/docker.sock:/var/run/docker.sock</code> et installez docker-cli dans le conteneur Jenkins.",
+        },
+        {
+          num: "06",
+          category: "Tests & Validation",
+          title: "Tests &\nValidation",
+          color: "#10b981",
+          intro:
+            "La phase finale : vérifier que chaque composant fonctionne correctement et que l'infrastructure complète opère comme attendu.",
+          cards: [
+            {
+              title: "✅ Tests à effectuer",
+              content: `Valider chaque couche de la stack :<br><br>
+        → <strong>App</strong> : <code>curl http://localhost:5000/</code> → JSON ok<br>
+        → <strong>Métriques</strong> : <code>curl http://localhost:5000/metrics</code><br>
+        → <strong>Prometheus</strong> : target UP dans l'interface<br>
+        → <strong>Grafana</strong> : données visibles dans les panels<br>
+        → <strong>Jenkins</strong> : pipeline s'exécute sans erreur`,
+            },
+            {
+              title: "📋 Livrables attendus",
+              content: `Pour valider le TP, préparez :<br><br>
+        → <strong>Screenshots</strong> de chaque interface (Prometheus, Grafana, Jenkins)<br>
+        → Le code source de l'app Flask<br>
+        → Le <strong>docker-compose.yml</strong> final<br>
+        → Le <strong>Jenkinsfile</strong><br>
+        → Un rapport court décrivant chaque étape`,
+            },
+          ],
+          code: {
+            lang: "BASH — TESTS",
+            content: `<span class="comment"># 1. Tester l'application</span>
+curl http://localhost:<span class="number">5000</span>/
+curl http://localhost:<span class="number">5000</span>/metrics
+
+<span class="comment"># 2. Vérifier les conteneurs actifs</span>
+docker compose ps
+
+<span class="comment"># 3. Tester Prometheus</span>
+curl http://localhost:<span class="number">9090</span>/api/v1/targets
+
+<span class="comment"># 4. Vérifier les logs de chaque service</span>
+docker compose logs app
+docker compose logs prometheus
+docker compose logs grafana
+
+<span class="comment"># 5. Générer du trafic pour voir les métriques</span>
+<span class="keyword">for</span> i in {1..20}; <span class="keyword">do</span>
+  curl http://localhost:<span class="number">5000</span>/
+<span class="keyword">done</span>`,
+          },
+          checklist: [
+            "Application répond sur le port 5000",
+            "Endpoint /metrics retourne des données valides",
+            "Prometheus affiche la target en état <strong>UP</strong>",
+            "Données visibles dans Grafana après quelques requêtes",
+            "Dashboard Grafana affiche le compteur de requêtes",
+            "Pipeline Jenkins s'exécute complètement sans erreur",
+            "Tout redémarre correctement après <strong>docker compose down && up</strong>",
+          ],
+          tip: "💡 Pour voir vos métriques monter dans Grafana, générez du trafic avec une boucle curl. Configurez un intervalle de rafraîchissement de 5s dans Grafana pour voir les données en temps réel.",
+        },
+      ];
+
+      /* ===== NAVIGATION ===== */
+      let currentPart = 0;
+
+      function showPage(page, partIndex) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-btn")
+          .forEach((b) => b.classList.remove("active"));
+
+        if (page === "home") {
+          document.getElementById("page-home").classList.add("active");
+          document.getElementById("nav-home").classList.add("active");
+          window.scrollTo(0, 0);
+        } else {
+          currentPart = partIndex || 0;
+          renderDetails(currentPart);
+          document.getElementById("page-details").classList.add("active");
+          document.getElementById("nav-details").classList.add("active");
+          window.scrollTo(0, 0);
+        }
+      }
+
+      function renderDetails(index) {
+        const p = parts[index];
+        const titleLines = p.title.split("\n");
+        const content = `
+    <button class="back-btn" onclick="showPage('home')">← Retour à l'accueil</button>
+    <div class="detail-header">
+      <div class="detail-num-big" style="color:${p.color}">${p.num}</div>
+      <div class="detail-header-text">
+        <div class="detail-category" style="color:${p.color}">Partie ${p.num} — ${p.category}</div>
+        <h1 class="detail-title">${titleLines[0]}<br>${titleLines[1] || ""}</h1>
+        <p class="detail-intro">${p.intro}</p>
+      </div>
+    </div>
+
+    <div class="detail-grid" style="--part-col:${p.color}">
+      ${p.cards
+        .map(
+          (c) => `
+        <div class="detail-card">
+          <div class="detail-card-title">${c.title}</div>
+          <div class="detail-card-content">${c.content}</div>
+        </div>
+      `,
+        )
+        .join("")}
+    </div>
+
+    <div class="code-block" data-lang="${p.code.lang}" style="--part-col:${p.color}">
+      ${p.code.content}
+    </div>
+
+    <h3 style="font-size:14px;font-family:var(--font-mono);letter-spacing:2px;text-transform:uppercase;color:${p.color};margin:48px 0 24px;">Checklist de validation</h3>
+    <ul class="checklist" style="--part-col:${p.color}">
+      ${p.checklist.map((item) => `<li>${item}</li>`).join("")}
+    </ul>
+
+    <div class="tip-box">
+      <div class="tip-label">Conseil</div>
+      <div class="tip-text">${p.tip}</div>
+    </div>
+
+    <div class="part-nav">
+      <button class="part-nav-btn prev" onclick="showPage('details', ${index - 1})" ${index === 0 ? "disabled" : ""}>
+        ← Partie ${String(index).padStart(2, "0")} — ${index > 0 ? parts[index - 1].category : ""}
+      </button>
+      <button class="part-nav-btn next" onclick="${index < parts.length - 1 ? `showPage('details', ${index + 1})` : `showPage('home')`}" >
+        ${index < parts.length - 1 ? `Partie ${String(index + 2).padStart(2, "0")} — ${parts[index + 1].category} →` : "Retour accueil →"}
+      </button>
+    </div>
+  `;
+        document.getElementById("details-content").innerHTML = content;
+      }
+
+      /* ===== CANVAS BACKGROUND ===== */
+      const canvas = document.getElementById("bg-canvas");
+      const ctx = canvas.getContext("2d");
+      let particles = [];
+      let animFrame;
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function createParticles() {
+        particles = [];
+        const count = Math.floor((canvas.width * canvas.height) / 20000);
+        for (let i = 0; i < count; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.3,
+            vy: (Math.random() - 0.5) * 0.3,
+            size: Math.random() * 1.5 + 0.3,
+            opacity: Math.random() * 0.5 + 0.1,
+          });
+        }
+      }
+
+      function drawGrid() {
+        ctx.strokeStyle = "rgba(0, 240, 255, 0.025)";
+        ctx.lineWidth = 0.5;
+        const step = 60;
+        for (let x = 0; x < canvas.width; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += step) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+      }
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGrid();
+
+        particles.forEach((p) => {
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(0, 240, 255, ${p.opacity})`;
+          ctx.fill();
+        });
+
+        // Connect nearby particles
+        for (let i = 0; i < particles.length; i++) {
+          for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 100) {
+              ctx.beginPath();
+              ctx.moveTo(particles[i].x, particles[i].y);
+              ctx.lineTo(particles[j].x, particles[j].y);
+              ctx.strokeStyle = `rgba(0, 240, 255, ${0.06 * (1 - dist / 100)})`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
+          }
+        }
+
+        animFrame = requestAnimationFrame(animateParticles);
+      }
+
+      resizeCanvas();
+      createParticles();
+      animateParticles();
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+        createParticles();
+      });
+
+      /* ===== CURSOR ===== */
+      const cursor = document.getElementById("cursor");
+      const cursorRing = document.getElementById("cursorRing");
+      let mx = 0,
+        my = 0,
+        rx = 0,
+        ry = 0;
+
+      document.addEventListener("mousemove", (e) => {
+        mx = e.clientX;
+        my = e.clientY;
+        cursor.style.left = mx + "px";
+        cursor.style.top = my + "px";
+      });
+
+      function animateCursor() {
+        rx += (mx - rx) * 0.12;
+        ry += (my - ry) * 0.12;
+        cursorRing.style.left = rx + "px";
+        cursorRing.style.top = ry + "px";
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      /* ===== SCROLL REVEAL ===== */
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("visible");
+            }
+          });
+        },
+        { threshold: 0.1 },
+      );
+
+      function observeElements() {
+        document
+          .querySelectorAll(".reveal")
+          .forEach((el) => observer.observe(el));
+      }
+      observeElements();
+
+      /* ===== COUNTER ANIMATION ===== */
+      function animateCounters() {
+        document.querySelectorAll(".stat-num[data-target]").forEach((el) => {
+          const target = parseInt(el.dataset.target);
+          let current = 0;
+          const duration = 1200;
+          const step = target / (duration / 16);
+          const timer = setInterval(() => {
+            current = Math.min(current + step, target);
+            el.textContent = Math.round(current);
+            if (current >= target) clearInterval(timer);
+          }, 16);
+        });
+      }
+
+      const statsObserver = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            animateCounters();
+            statsObserver.disconnect();
+          }
+        },
+        { threshold: 0.5 },
+      );
+
+      const statsRow = document.querySelector(".stats-row");
+      if (statsRow) statsObserver.observe(statsRow);
+
+      /* ===== STAGGER DELAYS ===== */
+      document.querySelectorAll(".stack-card").forEach((el, i) => {
+        el.style.animationDelay = i * 0.08 + "s";
+      });
+
+      /* ===== CARD HOVER GLOW ===== */
+      document.querySelectorAll(".stack-card, .part-card").forEach((card) => {
+        card.addEventListener("mousemove", (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+          card.style.background = `radial-gradient(circle at ${x}% ${y}%, rgba(255,255,255,0.04) 0%, var(--surface) 60%)`;
+        });
+        card.addEventListener("mouseleave", () => {
+          card.style.background = "";
+        });
+      });
+    </script>
+  </body>
+</html>
